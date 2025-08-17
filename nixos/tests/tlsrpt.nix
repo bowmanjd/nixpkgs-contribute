@@ -31,10 +31,11 @@
     machine.wait_for_file("/run/tlsrpt/collectd.sock")
     machine.wait_until_succeeds("journalctl -o cat -u tlsrpt-collectd | grep -Pq 'Database .* setup finished'")
     machine.wait_until_succeeds("journalctl -o cat -u tlsrpt-reportd | grep -Pq 'Database .* setup finished'")
+    machine.wait_until_succeeds("journalctl -o cat -u tlsrpt-reportd | grep -Pq 'Fetcher .* finished'")
 
     # Enabling postfix should put sendmail as the sendmail setting
     machine.succeed("grep -q sendmail_script=sendmail /etc/tlsrpt/reportd.cfg")
-    machine.succeed("systemctl show --property SupplementaryGroups postfix.service | grep tlsrpt")
+    machine.succeed("getent group tlsrpt | grep -q postfix")
 
     machine.log(machine.succeed("systemd-analyze security tlsrpt-collectd.service tlsrpt-reportd.service | grep -v ✓"))
   '';

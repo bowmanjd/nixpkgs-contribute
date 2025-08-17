@@ -5,6 +5,7 @@
   gmp,
   mpfr,
   ntl,
+  windows,
   autoconf,
   automake,
   gettext,
@@ -13,7 +14,7 @@
   blas,
   lapack,
   withBlas ? true,
-  withNtl ? true,
+  withNtl ? !ntl.meta.broken,
 }:
 
 assert
@@ -40,16 +41,18 @@ stdenv.mkDerivation rec {
     mpfr
   ];
 
-  buildInputs =
-    [
-      gmp
-    ]
-    ++ lib.optionals withBlas [
-      openblas
-    ]
-    ++ lib.optionals withNtl [
-      ntl
-    ];
+  buildInputs = [
+    gmp
+  ]
+  ++ lib.optionals withBlas [
+    openblas
+  ]
+  ++ lib.optionals withNtl [
+    ntl
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isMinGW [
+    windows.pthreads
+  ];
 
   # We're not using autoreconfHook because flint's bootstrap
   # script calls autoreconf, among other things.
@@ -58,17 +61,16 @@ stdenv.mkDerivation rec {
     ./bootstrap.sh
   '';
 
-  configureFlags =
-    [
-      "--with-gmp=${gmp}"
-      "--with-mpfr=${mpfr}"
-    ]
-    ++ lib.optionals withBlas [
-      "--with-blas=${openblas}"
-    ]
-    ++ lib.optionals withNtl [
-      "--with-ntl=${ntl}"
-    ];
+  configureFlags = [
+    "--with-gmp=${gmp}"
+    "--with-mpfr=${mpfr}"
+  ]
+  ++ lib.optionals withBlas [
+    "--with-blas=${openblas}"
+  ]
+  ++ lib.optionals withNtl [
+    "--with-ntl=${ntl}"
+  ];
 
   enableParallelBuilding = true;
 
@@ -79,7 +81,7 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl3Plus;
     maintainers = with maintainers; [ smasher164 ];
     teams = [ teams.sage ];
-    platforms = platforms.unix;
+    platforms = platforms.all;
     homepage = "https://www.flintlib.org/";
     downloadPage = "https://www.flintlib.org/downloads.html";
   };

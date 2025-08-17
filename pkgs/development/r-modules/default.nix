@@ -358,14 +358,13 @@ let
   # `self` is `_self` with overridden packages;
   # packages in `_self` may depends on overridden packages.
   self = (defaultOverrides _self self) // overrides;
-  _self =
-    {
-      inherit buildRPackage;
-    }
-    // mkPackageSet deriveBioc biocPackagesGenerated
-    // mkPackageSet deriveBiocAnn biocAnnotationPackagesGenerated
-    // mkPackageSet deriveBiocExp biocExperimentPackagesGenerated
-    // mkPackageSet deriveCran cranPackagesGenerated;
+  _self = {
+    inherit buildRPackage;
+  }
+  // mkPackageSet deriveBioc biocPackagesGenerated
+  // mkPackageSet deriveBiocAnn biocAnnotationPackagesGenerated
+  // mkPackageSet deriveBiocExp biocExperimentPackagesGenerated
+  // mkPackageSet deriveCran cranPackagesGenerated;
 
   # Takes in a generated JSON file's imported contents
   # and transforms it by swapping each element of the depends array with the dependency's derivation
@@ -967,6 +966,7 @@ let
       cargo
       rustc
     ];
+    gglinedensity = [ pkgs.cargo ];
     trackViewer = [ pkgs.zlib.dev ];
     themetagenomics = [ pkgs.zlib.dev ];
     Rsymphony = [ pkgs.pkg-config ];
@@ -1084,6 +1084,7 @@ let
     apsimx = [ pkgs.which ];
     cairoDevice = [ pkgs.pkg-config ];
     chebpol = [ pkgs.pkg-config ];
+    baseline = [ pkgs.lapack ];
     eds = [ pkgs.zlib.dev ];
     pgenlibr = [ pkgs.zlib.dev ];
     fftw = [ pkgs.pkg-config ];
@@ -1567,6 +1568,7 @@ let
     "PCRA"
     "PSCBS"
     "iemisc"
+    "red"
     "repmis"
     "R_cache"
     "R_filesets"
@@ -1577,11 +1579,13 @@ let
     "SpatialDecon"
     "stepR"
     "styler"
+    "tabs"
     "teal_code"
     "TreeTools"
     "TreeSearch"
     "ACNE"
     "APAlyzer"
+    "BAT"
     "EstMix"
     "Patterns"
     "PECA"
@@ -1762,6 +1766,14 @@ let
       enableParallelBuilding = false;
     });
 
+    orbweaver = old.orbweaver.overrideAttrs (attrs: {
+      postPatch = "patchShebangs configure";
+      nativeBuildInputs = attrs.nativeBuildInputs ++ [
+        pkgs.cargo
+        pkgs.rustc
+      ];
+    });
+
     xml2 = old.xml2.overrideAttrs (attrs: {
       preConfigure = ''
         export LIBXML_INCDIR=${pkgs.libxml2.dev}/include/libxml2
@@ -1939,6 +1951,10 @@ let
     });
 
     purrr = old.purrr.overrideAttrs (attrs: {
+      patchPhase = "patchShebangs configure";
+    });
+
+    tergo = old.tergo.overrideAttrs (attrs: {
       patchPhase = "patchShebangs configure";
     });
 
@@ -2182,6 +2198,17 @@ let
     RAppArmor = old.RAppArmor.overrideAttrs (attrs: {
       patches = [ ./patches/RAppArmor.patch ];
       LIBAPPARMOR_HOME = pkgs.libapparmor;
+    });
+
+    # Append cargo path to path variable
+    # This will provide cargo in case it's not set by the user
+    rextendr = old.rextendr.overrideAttrs (attrs: {
+      postPatch = ''
+        substituteInPlace R/zzz.R --replace-fail \
+          ".onLoad <- function(...) {" \
+          '.onLoad <- function(...) {
+           Sys.setenv(PATH = paste0(Sys.getenv("PATH"), ":${lib.getBin pkgs.cargo}/bin"))'
+      '';
     });
 
     RMySQL = old.RMySQL.overrideAttrs (attrs: {
@@ -2487,7 +2514,8 @@ let
           icu
           which
           zstd.dev
-        ] ++ attrs.buildInputs;
+        ]
+        ++ attrs.buildInputs;
         postInstall = ''
           install -d $out/bin $out/share/man/man1
           ln -s ../library/littler/bin/r $out/bin/r
@@ -2719,6 +2747,7 @@ let
       preConfigure = ''
         patchShebangs configure
         patchShebangs src/library/curl/configure
+        patchShebangs src/library/keyring/configure
         patchShebangs src/library/pkgdepends/configure
         patchShebangs src/library/ps/configure
       '';

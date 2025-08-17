@@ -27,7 +27,7 @@
   opencascade-occt_7_6_1,
   openvdb,
   qhull,
-  tbb_2021_11,
+  tbb_2021,
   wxGTK32,
   xorg,
   libbgcode,
@@ -54,7 +54,7 @@ let
       hash = "sha256-WNdAYu66ggpSYJ8Kt57yEA4mSTv+Rvzj9Rm1q765HpY=";
     };
   });
-  openvdb_tbb_2021_8 = openvdb.override { tbb = tbb_2021_11; };
+  openvdb_tbb_2021_8 = openvdb.override { tbb = tbb_2021; };
   wxGTK-override' = if wxGTK-override == null then wxGTK32 else wxGTK-override;
   opencascade-override' =
     if opencascade-override == null then opencascade-occt_7_6_1 else opencascade-override;
@@ -101,42 +101,41 @@ stdenv.mkDerivation (finalAttrs: {
     udevCheckHook
   ];
 
-  buildInputs =
-    [
-      binutils
-      boost186 # does not build with 1.87, see https://github.com/prusa3d/PrusaSlicer/issues/13799
-      cereal
-      cgal
-      curl
-      dbus
-      eigen
-      expat
-      glew
-      glib
-      glib-networking
-      gmp
-      gtk3
-      hicolor-icon-theme
-      ilmbase
-      libpng
-      mpfr
-      nanosvg-fltk
-      nlopt
-      opencascade-override'
-      openvdb_tbb_2021_8
-      qhull
-      tbb_2021_11
-      wxGTK-override'
-      xorg.libX11
-      libbgcode
-      heatshrink
-      catch2_3
-      webkitgtk_4_1
-      z3
-    ]
-    ++ lib.optionals withSystemd [
-      systemd
-    ];
+  buildInputs = [
+    binutils
+    boost186 # does not build with 1.87, see https://github.com/prusa3d/PrusaSlicer/issues/13799
+    cereal
+    cgal
+    curl
+    dbus
+    eigen
+    expat
+    glew
+    glib
+    glib-networking
+    gmp
+    gtk3
+    hicolor-icon-theme
+    ilmbase
+    libpng
+    mpfr
+    nanosvg-fltk
+    nlopt
+    opencascade-override'
+    openvdb_tbb_2021_8
+    qhull
+    tbb_2021
+    wxGTK-override'
+    xorg.libX11
+    libbgcode
+    heatshrink
+    catch2_3
+    webkitgtk_4_1
+    z3
+  ]
+  ++ lib.optionals withSystemd [
+    systemd
+  ];
 
   strictDeps = true;
 
